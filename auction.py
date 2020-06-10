@@ -1,4 +1,5 @@
 import pyautogui as pag
+from time import localtime
 from time import sleep
 import random
 import pytesseract as pt
@@ -10,10 +11,10 @@ pt.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 btn_gap1 = 55 # X 버튼 좌표 간격
 btn_gap2 = 50 # 장비탭 버튼 좌표 간격
 
-conf = 0.9 # 이미지 인식률 따라서 조정 . 컴퓨터마다 실행해보고 조절하면됨 E똥컴이거나 서버느리면  이거 2~3으로하셈
-search_delay = 2 # 검색 딜레이 서버 상황에 따라 조정. 검색 엔터 누르고 난 뒤의 대기
-open_delay = 5 # 경매장 첫 입장 딜레이 . 이것도 제뉴어리 83 최저간데 왜저거 63으로나옴 그럼? 인시굼ㄴ젠가봄 어차피 1원씩내리긴하는데 ㄱㄷ 수정좀해봄
-delay = 1000 # 한텀 끝나고 휴식기간(초)
+conf = 0.9 # 이미지 인식률 따라서 조정 . 컴퓨터마다 실행해보고 조절하면됨 E똥컴이거나 서버느리면  이거 1으로하셈
+search_delay = 3 # 검색 딜레이 서버 상황에 따라 조정. 검색 엔터 누르고 난 뒤의 대기
+open_delay = 6 # 경매장 첫 입장 딜레이 . 
+delay = 400 # 한텀 끝나고 휴식기간(초)
 
 tab_str = ["장비", "소비", "설치", "기타", "캐시"]
 
@@ -43,10 +44,21 @@ class Auction:
     def run(self) :
 
         modify_idx = [] # 가격 수정할 인덱스
-        
+
+
+        searched = []
+        jdw = []
         # 검색 시작
         for i in range(len(self.items)) :
             item = self.items[i]
+            
+            if(item.name in searched) :
+                if(item.name in jdw) :
+                    modify_idx.append(i)
+                    item.price = price-1
+                
+                continue
+            searched.append(item.name)
             pag.click(self.search_pos)
             pag.typewrite(item.name)
             pag.press('enter')
@@ -65,6 +77,8 @@ class Auction:
             if price < item.price and price >= item.minPrice :
                 modify_idx.append(i)
                 item.price = price - 1
+                jdw.append(item.name)
+                
             
             self.eraseText()
 
@@ -113,17 +127,21 @@ class Auction:
             sleep(0.5)
             pag.click(self.drop_pos)
             sleep(0.5)
+
+        
+            price = str(item.price)
+            
             if item.tab == '장비' or item.tab == '캐시' :
                 pag.click(pag.locateCenterOnScreen('.\\img\\sell_price1.PNG', confidence=conf))
                 sleep(0.5)
-                pag.typewrite(str(item.price))
+                pag.typewrite(price)
             else :
                 pag.click(pag.locateCenterOnScreen('.\\img\\sell_amount.PNG', confidence=conf))
                 sleep(0.5)
                 pag.typewrite(item.amount)
                 sleep(0.5)
                 pag.click(pag.locateCenterOnScreen('.\\img\\sell_price2.PNG', confidence=conf))
-                pag.typewrite(str(item.price))
+                pag.typewrite(price)
 
             sleep(0.5)
 
@@ -176,6 +194,9 @@ class Auction:
 
         while True:
             # 경매장 입장
+            now = localtime()
+            print ('입장 : %04d/%02d/%02d %02d:%02d:%02d' % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
+
             self.open()
             sleep(open_delay)
 
@@ -188,12 +209,17 @@ class Auction:
 
             # 경매장 퇴장
             self.close()
+            now = localtime()
+            print ('퇴장 : %04d/%02d/%02d %02d:%02d:%02d' % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
+
 
             flag = False
 
+            
             random_delay = random.random() * 300
             random_delay *= random.random() > 0.5 and 1 or -1
             random_delay = delay + random_delay < 10 and 10 or random_delay + delay
+            
             sleep(random_delay)
 
     def close(self) :
@@ -307,20 +333,28 @@ if __name__ == '__main__' :
     items = []
     # items.append(Item('장비', '.\\item_image\\1.PNG','xkdnjdlsgpstmfld', 99999999, '1', 99000000))
 
-ㅡ음    # '아이템종류', '아이템이미지', '아이템명영어로', 현재가격, '수량', 최소가격
+    # '아이템종류', '아이템이미지', '아이템명영어로', 현재가격, '수량', 최소가격
     # 이 순서로 넣으면댐
     # 따옴표 구분하고
     # 파일명도 니 원하는거로 넣어도댐
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 100000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
-    items.append(Item('소비', '.\\item_image\\4.PNG', 'tntkdgkszbqm', 126000, '1', 110000))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
+    items.append(Item('캐시', '.\\item_image\\5.PNG', 'akcl', 82999999, '1', 79999999))
 
-    
+
+
+
+
+
     auction = Auction(items)
 
     auction.loof(delay)
